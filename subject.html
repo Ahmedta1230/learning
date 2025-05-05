@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>أسئلة المادة</title>
+  <style>
+    /* نفس التصميم السابق */
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      padding: 40px;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4e73df;
+      margin-bottom: 40px;
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .controls {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 12px 30px;
+      background-color: #4e73df;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      transition: 0.3s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #2e59d9;
+      transform: translateY(-2px);
+    }
+
+    .card {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card:hover {
+      background: #e9e9e9;
+    }
+
+    .answer {
+      display: none;
+      margin-top: 10px;
+      color: #333;
+      padding: 10px;
+      background: #f1f1f1;
+      border-radius: 8px;
+    }
+
+    .answer img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>أسئلة المادة</h1>
+
+    <div class="controls">
+      <button onclick="addQuestion()">➕ إضافة سؤال</button>
+    </div>
+
+    <div id="subjectName"></div>
+    <div id="questions"></div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const subjectIndex = urlParams.get('subjectIndex');
+    let subjects = JSON.parse(localStorage.getItem("subjects") || "[]");
+    const subject = subjects[subjectIndex];
+
+    function render() {
+      const subjectNameDiv = document.getElementById("subjectName");
+      const questionsDiv = document.getElementById("questions");
+
+      subjectNameDiv.innerHTML = `<h2>${subject.name} (عدد الأسئلة: ${subject.questions.length})</h2>`;
+
+      questionsDiv.innerHTML = "";
+      subject.questions.forEach((q, questionIndex) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const questionContent = document.createElement("div");
+        questionContent.innerHTML = `
+          <strong>${q.question}</strong>
+          <button onclick="deleteQuestion(${questionIndex})" style="background: #ff4d4d; color: white; border: none; border-radius: 6px;">❌ حذف</button>`;
+
+        const answer = document.createElement("div");
+        answer.className = "answer";
+        answer.innerHTML = q.answer;
+
+        if (q.image) {
+          const img = document.createElement("img");
+          img.src = q.image;
+          answer.appendChild(img);
+        }
+
+        card.appendChild(questionContent);
+        card.appendChild(answer);
+
+        card.onclick = () => {
+          answer.style.display = (answer.style.display === "block") ? "none" : "block";
+        };
+
+        questionsDiv.appendChild(card);
+      });
+    }
+
+    function addQuestion() {
+      const question = prompt("اكتب السؤال:");
+      const answer = prompt("اكتب الإجابة:");
+
+      const addImage = confirm("هل تريد إضافة صورة للسؤال؟");
+
+      if (addImage) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.onchange = () => {
+          const file = fileInput.files[0];
+          const reader = new FileReader();
+          reader.onload = () => {
+            const imageBase64 = reader.result;
+            subject.questions.push({ question, answer, image: imageBase64 });
+            localStorage.setItem("subjects", JSON.stringify(subjects));
+            render();
+          };
+          reader.readAsDataURL(file);
+        };
+        fileInput.click();
+      } else {
+        subject.questions.push({ question, answer, image: null });
+        localStorage.setItem("subjects", JSON.stringify(subjects));
+        render();
+      }
+    }
+
+    function deleteQuestion(index) {
+      if (confirm("هل تريد حذف هذا السؤال؟")) {
+        subject.questions.splice(index, 1);
+        localStorage.setItem("subjects", JSON.stringify(subjects));
+        render();
+      }
+    }
+
+    render();
+  </script>
+
+</body>
+</html>
